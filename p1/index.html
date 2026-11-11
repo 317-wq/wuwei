@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>上传简历 · Upload Your Resume</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <div class="layout">
+      <!-- 左栏：文案 + 插画 -->
+      <section class="intro" aria-labelledby="page-title">
+        <p class="intro-kicker">Finish!</p>
+        <h1 class="intro-title" id="page-title">Upload Your Resume</h1>
+        <p class="intro-desc">
+          Upload your resume, the platform will help you parse and optimize, you
+          can complete this step whenever you like.
+        </p>
+        <figure class="intro-art">
+          <img src="cat.png" width="800" height="600"
+               alt="蓝色小猫与手机、羽毛笔的对话插画">
+        </figure>
+      </section>
+
+      <!-- 右栏：上传卡片 -->
+      <section class="uploader" aria-labelledby="uploader-title">
+        <h2 class="uploader-title" id="uploader-title">Upload file</h2>
+
+        <form class="upload-form" id="upload-form" novalidate>
+          <div class="dropzone-shell">
+          <label class="dropzone" id="dropzone" for="file-input" tabindex="0"
+                 aria-describedby="dropzone-hint">
+            <input class="visually-hidden" type="file" id="file-input" name="resume"
+                   accept=".pdf,.doc,.docx" tabindex="-1">
+
+            <span class="dropzone-empty" id="dropzone-empty">
+              <svg class="cloud" viewBox="0 0 52 34" fill="none" aria-hidden="true" focusable="false">
+                <path d="M13.5 29.5h25a8.2 8.2 0 0 0 .9-16.3A12.8 12.8 0 0 0 15.6 11 8.8 8.8 0 0 0 13.5 29.5Z"
+                      stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M26 25V13.5m0 0-5 5m5-5 5 5"
+                      stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="dropzone-hint" id="dropzone-hint">
+                Drag your resume file to this area, or click on the area to select
+                <br>the appropriate file to upload
+              </span>
+            </span>
+
+            <span class="dropzone-file" id="dropzone-file" hidden>
+              <span class="file-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                  <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
+                        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M14 3v5h5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="file-meta">
+                <span class="file-name" id="file-name"></span>
+                <span class="file-size" id="file-size"></span>
+              </span>
+              <button class="file-remove" id="file-remove" type="button" aria-label="移除已选文件">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </span>
+          </label>
+
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-secondary" id="btn-prev" type="button">Last step</button>
+            <button class="btn btn-primary" id="btn-finish" type="submit">Finish</button>
+          </div>
+
+          <ol class="stepper" aria-label="上传进度：第 3 步，共 3 步">
+            <li class="step is-complete">
+              <span class="dot" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                  <path d="m6 12.5 4 4L18 8" stroke="currentColor" stroke-width="2.4"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="visually-hidden">第 1 步已完成</span>
+            </li>
+            <li class="step is-complete">
+              <span class="dot" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                  <path d="m6 12.5 4 4L18 8" stroke="currentColor" stroke-width="2.4"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="visually-hidden">第 2 步已完成</span>
+            </li>
+            <li class="step is-current" aria-current="step">
+              <span class="dot" aria-hidden="true">3</span>
+              <span class="visually-hidden">第 3 步：上传简历</span>
+            </li>
+          </ol>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

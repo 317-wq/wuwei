@@ -1,0 +1,40 @@
+### 说明：可用 IDEA / VS Code 的 HTTP Client 直接运行本文件；执行登录后会自动把 token 写入变量
+### 1. 未认证访问受保护接口（预期 401）
+GET http://localhost:8080/hello
+
+> {%
+    client.test("未认证应返回 401", function () {
+        client.assert(response.status === 401, "预期 401，实际 " + response.status);
+    });
+%}
+
+### 2. 登录：用户名 test / 密码 123456
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "test",
+  "password": "123456"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+    client.log("token = " + response.body.token);
+%}
+
+### 3. 携带 token 访问 HelloWorld（预期返回 Hello World）
+GET http://localhost:8080/hello
+Authorization: Bearer {{token}}
+
+### 4. 另一种认证方式：HTTP Basic（同样返回 Hello World）
+GET http://localhost:8080/hello
+Authorization: Basic dGVzdDoxMjM0NTY=
+
+### 5. 密码错误（预期 401）
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "test",
+  "password": "000000"
+}

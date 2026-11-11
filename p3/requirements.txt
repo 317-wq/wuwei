@@ -1,0 +1,4 @@
+# 运行环境：Python 3.10+
+playwright>=1.40        # 方案一：Playwright 驱动 Chromium
+DrissionPage>=4.1       # 方案二：DrissionPage 接管 Chrome
+requests>=2.28          # 只在 Disqus 评论数兜底时用到

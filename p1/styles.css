@@ -1,0 +1,639 @@
+/* ============================================================
+   上传简历页 · 样式
+   设计基准：1200 宽面板（白色面板 + 内嵌上传卡片）
+   ============================================================ */
+
+:root {
+  --canvas: #b7b7b7;
+  --panel: #f8fbf9;
+  --ink: #0d0e10;
+  --ink-title: #1b2437;
+  --muted: #a3a7aa;
+  --hint: #97a2ad;
+  --blue: #1b5aff;
+  --blue-soft: #75acff;
+  --drop-bg: #f2faff;
+  --drop-border: #4577e8;
+  --focus: #0b2a6b;
+  --radius-panel: 20px;
+  --radius-card: 16px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 0 48px;
+  background: #fff;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 内容高于视口时，避免居中导致顶部被裁掉 */
+@supports (justify-content: safe center) {
+  body {
+    justify-content: safe center;
+  }
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 白色面板 ---------- */
+
+.app {
+  width: min(1120px, calc(100vw - 40px));
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  align-items: stretch;
+  padding: 0 5.5%;
+}
+
+/* ---------- 左栏文案 ---------- */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.intro-kicker {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.intro-title {
+  margin: 0 0 13px;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.intro-desc {
+  margin: 0;
+  max-width: 396px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* 插画：左栏底部，与卡片底边对齐 */
+.intro-art {
+  width: 100%;
+  max-width: 470px;
+  margin: auto 0 0;
+  pointer-events: none;
+}
+
+.intro-art img {
+  width: 100%;
+  height: auto;
+  /* 抵消切图左侧/底部的透明留白，让图形与文字左对齐、与卡片底对齐 */
+  transform: translate(-14.25%, 8%);
+}
+
+/* ---------- 右侧上传卡片 ---------- */
+
+.uploader {
+  margin-top: 0;
+  padding: 11px 13.8% 49px;
+  background: #fff;
+  border: 1px solid #eef1f5;
+  border-radius: var(--radius-card);
+  box-shadow:
+    0 18px 40px rgba(148, 170, 197, 0.13),
+    0 2px 8px rgba(148, 170, 197, 0.05);
+}
+
+.uploader-title {
+  margin: 0 0 27px;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: var(--ink-title);
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 拖拽上传区 ---------- */
+
+.dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 245px;
+  padding: 20px;
+  background: var(--drop-bg);
+  border: 1.5px dashed var(--drop-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.dropzone:hover {
+  background: #edf7ff;
+  border-color: #3d6ee6;
+}
+
+.dropzone:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.dropzone.is-invalid {
+  background: #fff6f6;
+  border-color: #e5484d;
+}
+
+.dropzone.is-dragover {
+  background: #e6f2ff;
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 1px rgba(27, 90, 255, 0.18);
+}
+
+.dropzone-empty[hidden] {
+  display: none;
+}
+
+.dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  text-align: center;
+}
+
+.cloud {
+  width: 32px;
+  height: 22px;
+  color: #2f6bff;
+}
+
+.dropzone-hint {
+  font-size: 10.5px;
+  line-height: 1.95;
+  color: var(--hint);
+}
+
+/* 已选文件状态 */
+
+.dropzone-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 330px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(47, 107, 255, 0.12);
+}
+
+.dropzone-file[hidden] {
+  display: none;
+}
+
+.file-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--blue);
+  background: #eaf1ff;
+}
+
+.file-badge svg {
+  width: 17px;
+  height: 17px;
+}
+
+.file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  font-size: 11px;
+  color: #98a2b3;
+}
+
+.file-remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: #98a2b3;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.file-remove:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.file-remove:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.file-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- 状态提示（浮在拖拽区与按钮之间，不影响布局） ---------- */
+
+.dropzone-shell {
+  position: relative;
+}
+
+.form-status {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: #98a2b3;
+}
+
+.form-status.is-error {
+  color: #e5484d;
+}
+
+.form-status.is-success {
+  color: #12805c;
+}
+
+/* ---------- 按钮 ---------- */
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 57px;
+}
+
+.btn {
+  width: 157px;
+  height: 37px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 0.07em;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease,
+    transform 0.06s ease;
+}
+
+.btn-secondary {
+  background: var(--blue-soft);
+}
+
+.btn-secondary:hover {
+  background: #5d9bff;
+}
+
+.btn-primary {
+  background: var(--blue);
+}
+
+.btn-primary:hover {
+  background: #0f4dea;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary:active {
+  background: #0b3fcc;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.btn[disabled] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* ---------- 步骤条 ---------- */
+
+.stepper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 62px;
+  width: max-content;
+  margin: 60px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepper::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: -30px;
+  height: 2.5px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    #adc3fb 0%,
+    #a9c0fa 78%,
+    rgba(169, 192, 250, 0.35) 92%,
+    rgba(214, 221, 233, 0.7) 100%
+  );
+}
+
+.step {
+  position: relative;
+  z-index: 1;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #2f62e8;
+  background: #e4edff;
+  border: 2px solid #2f62e8;
+  border-radius: 50%;
+}
+
+.dot svg {
+  width: 10px;
+  height: 10px;
+}
+
+.is-current .dot {
+  color: #fff;
+  background: #6f9dff;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 44% 56%;
+    padding: 0 4.5%;
+  }
+
+  .intro {
+    padding-top: 4px;
+  }
+
+  .uploader {
+    margin-top: 0;
+    padding: 18px 9% 40px;
+  }
+
+  .dropzone {
+    min-height: 230px;
+  }
+
+  .actions {
+    margin-top: 52px;
+  }
+
+  .stepper {
+    margin-top: 52px;
+  }
+}
+
+@media (max-width: 860px) {
+  body {
+    padding: 18px 0 24px;
+    justify-content: flex-start;
+  }
+
+  .layout {
+    display: block;
+    padding: 0;
+  }
+
+  .intro {
+    padding: 34px 28px 0;
+  }
+
+  .intro-title {
+    font-size: 23px;
+  }
+
+  .intro-kicker {
+    font-size: 21px;
+  }
+
+  .intro-art {
+    max-width: 340px;
+    margin: 22px auto 0;
+  }
+
+  .intro-art img {
+    transform: translate(-14.25%, 8%);
+  }
+
+  .uploader {
+    margin: 26px 28px 0;
+    padding: 18px 24px 34px;
+  }
+
+  .dropzone {
+    min-height: 210px;
+  }
+
+  .actions {
+    margin-top: 46px;
+  }
+
+  .stepper {
+    margin-top: 44px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    padding: 12px 0 16px;
+  }
+
+  .app {
+    width: calc(100vw - 24px);
+  }
+
+  .intro {
+    padding: 26px 20px 0;
+  }
+
+  .intro-kicker {
+    font-size: 19px;
+  }
+
+  .intro-title {
+    font-size: 21px;
+    margin-bottom: 10px;
+  }
+
+  .intro-desc {
+    font-size: 14px;
+  }
+
+  .intro-art {
+    max-width: 280px;
+  }
+
+  .uploader {
+    margin: 22px 20px 0;
+    padding: 16px 18px 28px;
+    border-radius: 12px;
+  }
+
+  .uploader-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .dropzone {
+    min-height: 190px;
+    padding: 16px 14px;
+  }
+
+  .cloud {
+    width: 28px;
+    height: 20px;
+  }
+
+  .dropzone-hint {
+    font-size: 11px;
+    line-height: 1.75;
+  }
+
+  .dropzone-hint br {
+    display: none;
+  }
+
+  .actions {
+    gap: 12px;
+    margin-top: 40px;
+  }
+
+  .btn {
+    flex: 1 1 0;
+    width: auto;
+    height: 34px;
+    font-size: 13.5px;
+  }
+
+  .stepper {
+    gap: 44px;
+    margin-top: 38px;
+  }
+
+  .stepper::before {
+    right: -20px;
+  }
+
+  .dot {
+    width: 17px;
+    height: 17px;
+    border-width: 1.8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

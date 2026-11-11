@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FastAPI Streaming Demo</title>
+  <style>
+    :root {
+      --bg: #060a12;
+      --panel: rgba(15, 23, 42, 0.72);
+      --border: rgba(148, 163, 184, 0.16);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #34d399;
+      --accent-2: #38bdf8;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --mono: "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(56, 189, 248, 0.16), transparent 60%),
+        radial-gradient(800px 500px at 100% 0%, rgba(52, 211, 153, 0.12), transparent 55%),
+        var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      width: min(1220px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.28), rgba(56, 189, 248, 0.28));
+      border: 1px solid rgba(94, 234, 212, 0.35);
+      font-size: 22px;
+      box-shadow: 0 0 32px rgba(56, 189, 248, 0.16);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.4vw, 26px);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+
+    .docs-link {
+      margin-left: auto;
+      color: #a7f3d0;
+      text-decoration: none;
+      font-size: 13.5px;
+      border: 1px solid rgba(52, 211, 153, 0.28);
+      background: rgba(52, 211, 153, 0.08);
+      padding: 9px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .docs-link:hover { background: rgba(52, 211, 153, 0.16); transform: translateY(-1px); }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(14px);
+    }
+
+    label {
+      display: block;
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    label + label, .field + .field { margin-top: 14px; }
+
+    textarea, input, select {
+      width: 100%;
+      margin-top: 8px;
+      color: var(--text);
+      background: rgba(2, 6, 23, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 11px;
+      padding: 11px 12px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: var(--mono);
+      font-size: 13.5px;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .grid label + label, .grid .field + .field { margin-top: 0; }
+
+    .grid .wide { grid-column: 1 / -1; }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 16px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    button:disabled { opacity: 0.42; cursor: not-allowed; }
+
+    .primary {
+      flex: 1;
+      color: #052e2b;
+      background: linear-gradient(135deg, #6ee7b7, #38bdf8);
+      box-shadow: 0 8px 26px rgba(56, 189, 248, 0.22);
+    }
+
+    .primary:hover:not(:disabled) { transform: translateY(-1px); }
+
+    .ghost {
+      color: #fecdd3;
+      background: rgba(251, 113, 133, 0.1);
+      border: 1px solid rgba(251, 113, 133, 0.28);
+    }
+
+    .hint {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.65;
+    }
+
+    code {
+      color: #bae6fd;
+      background: rgba(56, 189, 248, 0.1);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: var(--mono);
+      font-size: 0.92em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      padding: 10px 8px;
+      text-align: center;
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 11px;
+      min-width: 0;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      word-break: break-word;
+    }
+
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .status[data-kind="live"] { color: #a7f3d0; border-color: rgba(52, 211, 153, 0.24); }
+    .status[data-kind="live"]::before { background: var(--accent); animation: pulse 1.2s infinite; }
+    .status[data-kind="warn"] { color: #fde68a; border-color: rgba(251, 191, 36, 0.26); }
+    .status[data-kind="warn"]::before { background: var(--warning); }
+    .status[data-kind="error"] { color: #fecdd3; border-color: rgba(251, 113, 133, 0.3); }
+    .status[data-kind="error"]::before { background: var(--danger); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+      50% { opacity: 0.55; box-shadow: 0 0 0 5px rgba(52, 211, 153, 0); }
+    }
+
+    .output {
+      min-height: 610px;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .output-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 4px 12px;
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: #7dd3fc;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 999px;
+      padding: 4px 9px;
+      white-space: nowrap;
+    }
+
+    .console {
+      flex: 1;
+      min-height: 430px;
+      max-height: 60vh;
+      overflow: auto;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: #04070e;
+      box-shadow: inset 0 0 40px rgba(56, 189, 248, 0.04);
+    }
+
+    .console-text {
+      color: #d1fae5;
+      font-family: var(--mono);
+      font-size: 13.5px;
+      line-height: 1.9;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .console.streaming .console-text::after {
+      content: "▍";
+      margin-left: 1px;
+      color: var(--accent-2);
+      animation: blink 1s steps(1, end) infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .placeholder { color: #475569; }
+
+    .raw {
+      margin-top: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 11px;
+      background: rgba(2, 6, 23, 0.4);
+      overflow: hidden;
+    }
+
+    .raw summary {
+      padding: 9px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .raw pre {
+      margin: 0;
+      padding: 0 12px 12px;
+      max-height: 180px;
+      overflow: auto;
+      color: #7dd3fc;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .page { width: min(100% - 24px, 680px); padding-top: 22px; }
+      main { grid-template-columns: 1fr; }
+      .output { min-height: 480px; }
+      .console { min-height: 300px; max-height: 52vh; }
+      .docs-link { display: none; }
+    }
+
+    @media (max-width: 420px) {
+      .grid { grid-template-columns: 1fr; }
+      .grid .wide { grid-column: auto; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="logo">⚡</div>
+      <div>
+        <h1>FastAPI Streaming Demo</h1>
+        <p class="subtitle">SSE · NDJSON · 分块传输 —— 同一条请求，三种看法</p>
+      </div>
+      <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">Swagger 文档 ↗</a>
+    </header>
+
+    <main>
+      <section class="panel">
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt">用三句话解释 FastAPI 的流式响应是怎么实现的</textarea>
+
+        <div class="grid">
+          <div class="field wide">
+            <label for="protocol">传输协议</label>
+            <select id="protocol">
+              <option value="sse">SSE · text/event-stream</option>
+              <option value="ndjson">NDJSON · application/x-ndjson</option>
+              <option value="json">一次性 JSON（对照组）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="maxTokens">max_tokens</label>
+            <input id="maxTokens" type="number" min="1" max="512" value="300" />
+          </div>
+          <div class="field">
+            <label for="tokenDelay">token 间隔 (ms)</label>
+            <input id="tokenDelay" type="number" min="0" max="300" value="20" />
+          </div>
+          <div class="field wide">
+            <label for="firstDelay">首 token 延迟 (ms)</label>
+            <input id="firstDelay" type="number" min="0" max="10000" value="500" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="startBtn" class="primary" type="button">▶ 开始请求</button>
+          <button id="stopBtn" class="ghost" type="button" disabled>■ 停止</button>
+        </div>
+
+        <p class="hint">
+          把 prompt 改成包含 <code>__error__</code> 的内容，可以观察「响应头已发出后如何报错」；
+          点击「停止」会主动断开连接，服务端会打印 disconnect 日志。
+        </p>
+
+        <div class="stats">
+          <div class="stat"><strong id="ttft">—</strong><span>首字延迟 TTFT</span></div>
+          <div class="stat"><strong id="elapsed">—</strong><span>总耗时</span></div>
+          <div class="stat"><strong id="tokens">0</strong><span>tokens</span></div>
+          <div class="stat"><strong id="tps">—</strong><span>tok/s</span></div>
+        </div>
+
+        <div class="status" id="status" data-kind="idle">就绪</div>
+      </section>
+
+      <section class="panel output">
+        <div class="output-head">
+          <span>实时输出</span>
+          <span class="badge" id="eventBadge">—</span>
+        </div>
+        <div class="console" id="console">
+          <div class="console-text" id="consoleText"><span class="placeholder">响应会在这里逐字出现…</span></div>
+        </div>
+        <details class="raw">
+          <summary>原始事件（最近 20 条）</summary>
+          <pre id="raw"></pre>
+        </details>
+      </section>
+    </main>
+
+    <footer>FastAPI + StreamingResponse · 内容由本地假模型生成，不调用任何外部服务</footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      prompt: $("prompt"),
+      protocol: $("protocol"),
+      maxTokens: $("maxTokens"),
+      tokenDelay: $("tokenDelay"),
+      firstDelay: $("firstDelay"),
+      startBtn: $("startBtn"),
+      stopBtn: $("stopBtn"),
+      console: $("console"),
+      consoleText: $("consoleText"),
+      raw: $("raw"),
+      status: $("status"),
+      eventBadge: $("eventBadge"),
+      ttft: $("ttft"),
+      elapsed: $("elapsed"),
+      tokens: $("tokens"),
+      tps: $("tps"),
+    };
+
+    const state = {
+      controller: null,
+      running: false,
+      startedAt: 0,
+      firstTokenAt: 0,
+      tokens: 0,
+      timer: null,
+      rawEntries: [],
+    };
+
+    const protocolMeta = {
+      sse: { badge: "text/event-stream", url: "/api/chat/stream" },
+      ndjson: { badge: "application/x-ndjson", url: "/api/chat/stream/ndjson" },
+      json: { badge: "application/json", url: "/api/chat" },
+    };
+
+    function setStatus(text, kind = "idle") {
+      els.status.textContent = text;
+      els.status.dataset.kind = kind;
+    }
+
+    function setRunning(running) {
+      state.running = running;
+      els.startBtn.disabled = running;
+      els.stopBtn.disabled = !running;
+      els.console.classList.toggle("streaming", running && els.protocol.value !== "json");
+    }
+
+    function resetUI() {
+      state.startedAt = performance.now();
+      state.firstTokenAt = 0;
+      state.tokens = 0;
+      state.rawEntries = [];
+      els.consoleText.textContent = "";
+      els.raw.textContent = "";
+      els.ttft.textContent = "—";
+      els.elapsed.textContent = "0 ms";
+      els.tokens.textContent = "0";
+      els.tps.textContent = "—";
+      const meta = protocolMeta[els.protocol.value];
+      els.eventBadge.textContent = meta.badge;
+      clearInterval(state.timer);
+      state.timer = setInterval(() => {
+        if (!state.running) return;
+        els.elapsed.textContent = Math.round(performance.now() - state.startedAt) + " ms";
+      }, 100);
+    }
+
+    function appendText(text) {
+      els.consoleText.textContent += text;
+      els.console.scrollTop = els.console.scrollHeight;
+    }
+
+    function addRaw(event, data) {
+      const line = event.padEnd(7) + " " + JSON.stringify(data);
+      state.rawEntries.push(line);
+      if (state.rawEntries.length > 20) state.rawEntries.shift();
+      els.raw.textContent = state.rawEntries.join("\n");
+    }
+
+    function handleEvent(event, data) {
+      addRaw(event, data);
+      switch (event) {
+        case "start":
+          setStatus("已建立连接 · " + data.request_id + " · 等待首 token…", "live");
+          break;
+        case "ping":
+          break;
+        case "token":
+          if (!state.firstTokenAt) {
+            state.firstTokenAt = performance.now();
+            els.ttft.textContent = Math.round(state.firstTokenAt - state.startedAt) + " ms";
+          }
+          state.tokens += 1;
+          els.tokens.textContent = String(state.tokens);
+          appendText(data.delta ?? "");
+          break;
+        case "usage":
+          if (data.ttft_ms !== null && data.ttft_ms !== undefined) {
+            els.ttft.textContent = Math.round(data.ttft_ms) + " ms";
+          }
+          els.elapsed.textContent = Math.round(data.elapsed_ms) + " ms";
+          els.tokens.textContent = String(data.usage.completion_tokens);
+          els.tps.textContent = Number(data.tokens_per_second).toFixed(1);
+          break;
+        case "error":
+          setStatus("服务端错误：" + data.message, "error");
+          appendText("\n\n[流内错误] " + data.message);
+          break;
+        case "done":
+          setStatus("完成 · finish_reason=" + data.finish_reason, "ok");
+          break;
+        default:
+          break;
+      }
+    }
+
+    // SSE 解析：按空行切帧，再逐行读取 event / data / id 字段
+    function handleSSEBlock(block) {
+      let event = "message";
+      let id = null;
+      const dataLines = [];
+      for (const line of block.split("\n")) {
+        if (!line || line.startsWith(":")) continue;
+        const colon = line.indexOf(":");
+        const field = colon === -1 ? line : line.slice(0, colon);
+        let value = colon === -1 ? "" : line.slice(colon + 1);
+        if (value.startsWith(" ")) value = value.slice(1);
+        if (field === "event") event = value;
+        else if (field === "data") dataLines.push(value);
+        else if (field === "id") id = value;
+      }
+      const raw = dataLines.join("\n");
+      if (!raw) return;
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (_err) {
+        data = { message: raw };
+      }
+      handleEvent(event, data);
+    }
+
+    async function readSSE(response) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        buffer = buffer.replace(/\r\n/g, "\n");
+        let boundary = buffer.indexOf("\n\n");
+        while (boundary !== -1) {
+          const block = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+          handleSSEBlock(block);
+          boundary = buffer.indexOf("\n\n");
+        }
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) handleSSEBlock(buffer);
+    }
+
+    async function readNDJSON(response) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const item = JSON.parse(line);
+            handleEvent(item.event, item.data);
+          } catch (_err) {
+            console.warn("无法解析的 NDJSON 行", line);
+          }
+        }
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        try {
+          const item = JSON.parse(buffer);
+          handleEvent(item.event, item.data);
+        } catch (_err) {
+          console.warn("无法解析的 NDJSON 尾行", buffer);
+        }
+      }
+    }
+
+    async function run() {
+      if (state.running) return;
+      const protocol = els.protocol.value;
+      const meta = protocolMeta[protocol];
+      const prompt = els.prompt.value.trim();
+      if (!prompt) {
+        setStatus("prompt 不能为空", "error");
+        return;
+      }
+
+      resetUI();
+      setRunning(true);
+      setStatus("请求已发出，等待响应头…", "live");
+      state.controller = new AbortController();
+      const signal = state.controller.signal;
+
+      const body = JSON.stringify({
+        prompt,
+        model: "demo-1",
+        max_tokens: Number(els.maxTokens.value) || 300,
+        token_delay_ms: Number(els.tokenDelay.value) || 0,
+        first_token_delay_ms: Number(els.firstDelay.value) || 0,
+      });
+
+      try {
+        if (protocol === "json") {
+          const response = await fetch(meta.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+            signal,
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || JSON.stringify(data.detail || data));
+          }
+          els.consoleText.textContent = data.content;
+          els.tokens.textContent = String(data.usage.completion_tokens);
+          els.ttft.textContent = "一次性";
+          els.elapsed.textContent = Math.round(data.elapsed_ms) + " ms";
+          els.tps.textContent = "—";
+          addRaw("json", data);
+          setStatus("完成 · 一次性返回，无流式效果", "ok");
+        } else {
+          const response = await fetch(meta.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: meta.badge,
+            },
+            body,
+            signal,
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || data.detail || "HTTP " + response.status);
+          }
+          if (protocol === "sse") await readSSE(response);
+          else await readNDJSON(response);
+        }
+      } catch (err) {
+        if (err.name === "AbortError") {
+          setStatus("已停止（客户端主动断开）", "warn");
+        } else {
+          setStatus("请求失败：" + err.message, "error");
+        }
+      } finally {
+        clearInterval(state.timer);
+        setRunning(false);
+        state.controller = null;
+      }
+    }
+
+    els.startBtn.addEventListener("click", run);
+    els.stopBtn.addEventListener("click", () => {
+      if (state.controller) state.controller.abort();
+    });
+    els.protocol.addEventListener("change", () => {
+      const meta = protocolMeta[els.protocol.value];
+      els.eventBadge.textContent = meta.badge;
+    });
+    els.prompt.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        run();
+      }
+    });
+  </script>
+</body>
+</html>

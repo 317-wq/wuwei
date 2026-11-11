@@ -1,0 +1,61 @@
+@baseUrl = http://127.0.0.1:8000
+
+### 健康检查
+GET {{baseUrl}}/api/health
+
+### 非流式对话（对照组，一次性返回完整 JSON）
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "prompt": "用三句话解释 FastAPI 的流式响应是怎么实现的",
+  "max_tokens": 60,
+  "token_delay_ms": 0,
+  "first_token_delay_ms": 0
+}
+
+### SSE 流式对话（IDEA / VS Code 的 HTTP Client 会显示原始事件帧）
+POST {{baseUrl}}/api/chat/stream
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "prompt": "介绍一下 SSE 的帧格式",
+  "max_tokens": 40,
+  "token_delay_ms": 20,
+  "first_token_delay_ms": 300
+}
+
+### NDJSON 流式对话
+POST {{baseUrl}}/api/chat/stream/ndjson
+Content-Type: application/json
+Accept: application/x-ndjson
+
+{
+  "prompt": "介绍一下 NDJSON 协议",
+  "max_tokens": 40,
+  "token_delay_ms": 20,
+  "first_token_delay_ms": 300
+}
+
+### 纯文本分块输出（最直接的流式演示）
+GET {{baseUrl}}/api/stream/echo?text=Hello%20Streaming&repeat=3&interval_ms=100
+
+### 模拟流到一半失败：SSE 会收到 event: error
+POST {{baseUrl}}/api/chat/stream
+Content-Type: application/json
+
+{
+  "prompt": "请解释 __error__ 这个标记",
+  "max_tokens": 10,
+  "token_delay_ms": 50
+}
+
+### 非流式接口遇到同样错误会返回 HTTP 502
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "prompt": "请解释 __error__ 这个标记",
+  "max_tokens": 10
+}
